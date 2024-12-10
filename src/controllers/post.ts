@@ -6,16 +6,14 @@ import { asyncHandler } from "../middleware/error/async_handler";
 import { ParsedQs } from "qs";
 import mongoose from "mongoose";
 import { User } from "models/user";
+import { postType } from "../Schema/postSchema";
 
 interface TGetPost {
   [userid: string]: string;
 }
 
 export const addPost = asyncHandler(
-  async (
-    req: Request<{}, {}, { title: string; content: string }>,
-    res: Response
-  ) => {
+  async (req: Request<{}, {}, postType>, res: Response) => {
     const userName = (req as AccessToken).userName;
     const { title, content } = req.body;
 
@@ -43,7 +41,7 @@ export const addPost = asyncHandler(
 );
 
 export const deletePost = asyncHandler(
-  async (req: Request<{}, {}, { title: string }>, res: Response) => {
+  async (req: Request<{}, {}, postType>, res: Response) => {
     const { title } = req.body;
     const userName = (req as AccessToken).userName;
     console.log(title, userName);
@@ -62,10 +60,7 @@ export const deletePost = asyncHandler(
   }
 );
 export const updatePost = asyncHandler(
-  async (
-    req: Request<{}, {}, { title: string; content: string }>,
-    res: Response
-  ) => {
+  async (req: Request<{}, {}, postType>, res: Response) => {
     const { title, content } = req.body;
     const userName = (req as AccessToken).userName;
     const post = await postModel.findOne({ title: title });

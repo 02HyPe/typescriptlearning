@@ -4,12 +4,10 @@ import { User } from "../models/user";
 import { genSalt, hash, compare } from "bcrypt";
 import { sign } from "jsonwebtoken";
 import { asyncHandler } from "../middleware/error/async_handler";
+import { signInType, signUpType } from "../Schema/userSchema";
 
 export const signUp = asyncHandler(
-  async (
-    req: Request<{}, {}, { userName: string; email: string; password: string }>,
-    res: Response
-  ) => {
+  async (req: Request<{}, {}, signUpType>, res: Response) => {
     const { userName, email, password } = req.body;
 
     const user = await userModel.findOne({
@@ -33,10 +31,7 @@ export const signUp = asyncHandler(
 );
 
 export const signIn = asyncHandler(
-  async (
-    req: Request<{}, {}, { userName: string; password: string }>,
-    res: Response
-  ) => {
+  async (req: Request<{}, {}, signInType>, res: Response) => {
     const { userName, password } = req.body;
 
     const user = await userModel.findOne({ userName: userName });
