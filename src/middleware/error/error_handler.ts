@@ -1,26 +1,28 @@
 import { Request, Response, ErrorRequestHandler, NextFunction } from "express";
 import { isHttpError } from "http-errors";
 
-class ErrorResponse extends Error {
-  message: string;
-  statusCode: number;
+export class ErrorResponse extends Error {
+  constructor(private statusCode: number, message: string) {
+    super(message);
+    this.statusCode = statusCode;
+  }
 }
 
-export const errorHandler: ErrorRequestHandler = (
-  err: unknown,
+export const errorHandler = (
+  err: any,
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  let statusCode = 500;
-  let errorMessage = "unkown error occured";
-  if (isHttpError(err)) {
-    statusCode = err.status;
-    errorMessage = err.message;
-  }
-  res.status(statusCode).json({
+  let error = { ...err };
+  error.message = err.message;
+
+  error = new ErrorResponse(error.statusCode, error.message);
+  res.status(error.statusCode || 500).json({
+    success: false,
     error: {
-      message: errorMessage,
+      code: error.statusCode || 500,
+      message: error.message || "Server Error",
     },
   });
 };

@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { TokenExpiredError } from "jsonwebtoken";
 import { ZodError } from "zod";
 
 export const asyncHandler = (
@@ -13,11 +14,10 @@ export const asyncHandler = (
           message: `${issue.path.join(".")} is ${issue.message}`,
         }));
         res.json({ error: "Invalid data", details: errorMessages });
-        return;
+        next(error);
       }
       console.log(error);
-      res.json(`${error}`);
-      return;
+      next(error);
     }
   };
 };

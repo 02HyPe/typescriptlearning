@@ -8,6 +8,7 @@ import {
   offsetPagePostq,
   updatePost,
   userPost,
+  addLike,
 } from "../controllers/post";
 import { auth } from "../middleware/auth";
 import { validateData } from "../middleware/validators/validator";
@@ -23,5 +24,6 @@ route.get("/userpost/:userid", auth, userPost);
 route.get("/offsetpagepost/:page", auth, offsetPagePost);
 route.get("/offsetpagepostq/", auth, offsetPagePostq);
 route.get("/cursorpagepost/", auth, cursorPagePost);
+route.put("/addlike", auth, validateData(post), addLike);
 
 export default route;

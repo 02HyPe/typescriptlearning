@@ -1,50 +1,34 @@
 import { sign } from "jsonwebtoken";
-import { asyncHandler } from "../middleware/error/async_handler";
+import { string } from "zod";
 
-// export const generateAccessToken = (userName: string, email: string) => {
-//   const token = sign(
-//     {
-//       userName: userName,
-//       email: email,
-//     },
-//     process.env.ACCESS_TOKEN_SECERET,
-//     {
-//       expiresIn: 60 * 3,
-//     }
-//   );
+export const AccessAndRefreshTokenGenerator = (
+  userName: string,
+  email: string
+) => {
+  const accessToken = accessTokenGenerator(userName, email);
+  const refreshToken = refreshTokenGenerator(userName, email);
+  return { accessToken, refreshToken };
+};
 
-//   return token;
-// };
-
-// export const generateRefreshToken = asyncHandler(
-//   async (userName: string, email: string) => {
-//     const token = sign(
-//       {
-//         userName: userName,
-//         email: email,
-//       },
-//       process.env.REFRESH_TOKEN_SECERET,
-//       {
-//         expiresIn: "2h",
-//       }
-//     );
-//     return token;
-//   }
-// );
-
-// export const generateRefreshAndAccessToken = (
-//   userName: string,
-//   email: string
-// ) => {
-//   const token = sign(
-//     {
-//       userName: userName,
-//       email: email,
-//     },
-//     process.env.REFRESH_TOKEN_SECERET,
-//     {
-//       expiresIn: "2h",
-//     }
-//   );
-//   return token;
-// };
+export const accessTokenGenerator = (userName: string, email: string) => {
+  const accessToken = sign(
+    {
+      userName: userName,
+      email: email,
+    },
+    process.env.ACCESS_TOKEN_SECERET,
+    { expiresIn: 60 * 3 }
+  );
+  return accessToken;
+};
+export const refreshTokenGenerator = (userName: string, email: string) => {
+  const refreshToken = sign(
+    {
+      userName: userName,
+      email: email,
+    },
+    process.env.REFRESH_TOKEN_SECERET,
+    { expiresIn: "7h" }
+  );
+  return refreshToken;
+};
