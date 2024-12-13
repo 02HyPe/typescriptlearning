@@ -244,7 +244,7 @@ export const addLike = asyncHandler(
   }
 );
 
-export const addlike = asyncHandler(
+export const addViews = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { title, postUserName } = req.body;
     const postUser = await userModel.findOne({ userName: postUserName });
@@ -252,8 +252,8 @@ export const addlike = asyncHandler(
       throw next(new ErrorResponse(404, "post user not found to view"));
     }
     const post = await postModel.findOne({
-      user: postUser,
-      title: postUserName,
+      user: postUser._id,
+      title: title,
     });
     if (!post) {
       throw next(new ErrorResponse(404, "post not found to view"));
@@ -267,5 +267,6 @@ export const addlike = asyncHandler(
         $inc: { views: 1 },
       }
     );
+    res.json({ msg: "viewed" });
   }
 );
