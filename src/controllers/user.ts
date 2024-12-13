@@ -30,7 +30,6 @@ export const signUp = asyncHandler(
     }
     const salt = await genSalt(10);
     const hashedPassword = await hash(password, salt);
-    // await session.withTransaction(async () => {});
 
     const session = await userModel.startSession();
     await session.withTransaction(async () => {

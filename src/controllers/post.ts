@@ -1,5 +1,5 @@
 import { AccessToken } from "middleware/auth";
-import { postModel } from "../config/mongoose.model";
+import { interactionModel, postModel } from "../config/mongoose.model";
 import { userModel } from "../config/mongoose.model";
 import { NextFunction, Request, Response } from "express";
 import { asyncHandler } from "../middleware/error/async_handler";
@@ -26,13 +26,29 @@ export const addPost = asyncHandler(
       throw next(new ErrorResponse(409, "post already exists"));
     }
 
-    const postInfo = new postModel({
-      user: user["_id"].toString(),
-      title: title,
-      content: content,
+    const session = await mongoose.startSession();
+    await session.withTransaction(async () => {
+      const postInfo = new postModel({
+        user: user["_id"].toString(),
+        title: title,
+        content: content,
+      });
+      await postInfo.save({ session });
+      const postID = await postModel
+        .findOne({
+          user: user["_id"].toString(),
+          title: title,
+        })
+        .session(session);
+      const postInfoInteraction = new interactionModel({
+        user: user["_id"].toString(),
+        post: postID?._id,
+        likes: [],
+      });
+      await postInfoInteraction.save({ session });
     });
+    await session.endSession();
 
-    await postInfo.save();
     res.json({ msg: "Post uploaded" });
   }
 );
@@ -173,15 +189,83 @@ export const offsetPagePostq = asyncHandler(
 export const addLike = asyncHandler(
   async (
     req: Request<{}, {}, { title: string; user: string; userName: string }>,
-    res: Response
+    res: Response,
+    next: NextFunction
   ) => {
     const { title, user } = req.body;
     const postUser = await userModel.findOne({ userName: user });
-    const post = await postModel.findOneAndUpdate(
-      { title: title, user: postUser?._id },
-      { $inc: { likes: 1, __v: 1 } }
+    if (!postUser) {
+      throw next(new ErrorResponse(404, "postUser not found"));
+    }
+    const post = await postModel.findOne({
+      title: title,
+      user: postUser?._id,
+    });
+    if (!post) {
+      throw next(new ErrorResponse(404, "post not found"));
+    }
+
+    const validateLike = await interactionModel.findOne({
+      user: postUser?._id,
+      post: post?._id,
+    });
+    if (!validateLike) {
+      throw next(new ErrorResponse(404, "validateLike not found"));
+    }
+    const likeUser = await userModel.findOne({
+      userName: (req as AccessToken).userName,
+    });
+    if (!likeUser) {
+      throw next(new ErrorResponse(404, "likeUser not found"));
+    }
+
+    const likeuserId: string = likeUser?._id.toString();
+    if (validateLike?.likes?.includes(likeuserId)) {
+      res.status(200).json({ msg: "liked" });
+      return;
+    }
+
+    await interactionModel.findOneAndUpdate(
+      {
+        user: postUser?._id,
+        post: post?._id,
+      },
+      {
+        $push: {
+          likes: likeUser?._id,
+        },
+        $inc: {
+          __v: 1,
+        },
+      }
     );
 
     res.json({ msg: "successfull" });
+  }
+);
+
+export const addlike = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { title, postUserName } = req.body;
+    const postUser = await userModel.findOne({ userName: postUserName });
+    if (!postUser) {
+      throw next(new ErrorResponse(404, "post user not found to view"));
+    }
+    const post = await postModel.findOne({
+      user: postUser,
+      title: postUserName,
+    });
+    if (!post) {
+      throw next(new ErrorResponse(404, "post not found to view"));
+    }
+    await interactionModel.findOneAndUpdate(
+      {
+        user: postUser._id,
+        post: post._id,
+      },
+      {
+        $inc: { views: 1 },
+      }
+    );
   }
 );

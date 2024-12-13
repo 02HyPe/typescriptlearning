@@ -5,7 +5,7 @@ export interface Post {
   title: string;
   content: string;
   likes: number;
-  __v: number;
+  __v?: number;
 }
 
 export const postSchema = new mongoose.Schema<Post>({
