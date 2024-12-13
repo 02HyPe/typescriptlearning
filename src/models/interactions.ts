@@ -6,6 +6,7 @@ export interface Interaction {
   comment: string;
   views: number;
   createdAt: Date;
+  __v?: number;
 }
 
 export const postSchema = new mongoose.Schema<Interaction>({
@@ -13,4 +14,5 @@ export const postSchema = new mongoose.Schema<Interaction>({
   post: { type: String, ref: "posts", required: true },
   comment: { type: String, required: true },
   views: { type: Number, required: true },
+  __v: { type: Number, default: 0, required: true },
 });

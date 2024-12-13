@@ -109,14 +109,16 @@ export const signIn = asyncHandler(
 export const refreshAccessToken = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { refreshToken } = req.cookies;
-    const valid = await sessionModel.findOne({ refreshToken: refreshToken });
+    console.log(refreshToken);
+    const token = refreshToken.split(` `)[1];
+    const valid = await sessionModel.findOne({ refreshToken: token });
     if (!valid) {
       throw next(new ErrorResponse(401, "Login expired"));
     }
-    const { userName, email } = decode(refreshToken) as JwtPayload;
+    const { userName, email } = decode(token) as JwtPayload;
     const newAccessToken = accessTokenGenerator(userName, email);
     res
-      .cookie("accessToken", newAccessToken)
+      .cookie("accessToken", `Bearer ${newAccessToken}`)
       .json({ msg: "token refreshed succcessfully" });
   }
 );

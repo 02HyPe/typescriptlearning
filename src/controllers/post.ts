@@ -58,19 +58,22 @@ export const updatePost = asyncHandler(
   async (req: Request<{}, {}, postType>, res: Response, next: NextFunction) => {
     const { title, content } = req.body;
     const userName = (req as AccessToken).userName;
-    const post = await postModel.findOne({ title: title });
     const user = await userModel.findOne({ userName: userName });
+    const post = await postModel.findOne({ title: title, user: user?._id });
     if (!post || !user) {
       throw next(new ErrorResponse(404, "user or post not found"));
     }
     if (post.user !== user._id) {
       throw next(new ErrorResponse(401, "invalid post or not your post"));
     }
-    const updatedPost = await postModel.findByIdAndUpdate(post?._id, {
-      title: title,
-      content: content,
-    });
-    console.log(`post updated ${updatedPost}`);
+    await postModel.findOneAndUpdate(
+      { _id: post?._id },
+      {
+        title: title,
+        content: content,
+        $inc: { __v: 1 },
+      }
+    );
     res.json({ msg: "post successfully updated" });
   }
 );
@@ -169,19 +172,16 @@ export const offsetPagePostq = asyncHandler(
 //1 user = 1 like remaing
 export const addLike = asyncHandler(
   async (
-    req: Request<
-      {},
-      {},
-      { post_title: string; post_user: string; userName: string }
-    >,
+    req: Request<{}, {}, { title: string; user: string; userName: string }>,
     res: Response
   ) => {
-    const { post_title, post_user } = req.body;
-
-    const postUser = await userModel.findOne({ userName: post_user });
+    const { title, user } = req.body;
+    const postUser = await userModel.findOne({ userName: user });
     const post = await postModel.findOneAndUpdate(
-      { title: post_title, user: postUser?._id },
-      { $inc: { likes: 1 } }
+      { title: title, user: postUser?._id },
+      { $inc: { likes: 1, __v: 1 } }
     );
+
+    res.json({ msg: "successfull" });
   }
 );
